@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WA Gateway Dashboard</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 50px;
+        background: #f4f7f6;
+      }
+      .card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      #qrcode {
+        margin: 20px 0;
+        min-height: 256px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eee;
+      }
+      input {
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+        width: 80%;
+      }
+      button {
+        padding: 10px 20px;
+        background: #25d366;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      button:hover {
+        background: #128c7e;
+      }
+      #status {
+        font-weight: bold;
+        color: #555;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>WA Gateway Login</h2>
+      <input
+        type="text"
+        id="sessionName"
+        placeholder="Masukkan Nama Session (e.g. user1)"
+      />
+      <br />
+      <button onclick="startSession()">Generate QR</button>
+
+      <div id="qrcode">Menunggu Perintah...</div>
+      <div id="status">Status: Offline</div>
+    </div>
+
+    <script>
+      // 1. Inisialisasi Socket.io ke Server Go
+      const socket = io("ws://localhost:8080", {
+        transports: ["websocket"],
+      });
+      let currentSession = "";
+      socket.on("open",(e)=>{
+        console.log(e);
+
+      })
+      // Status update dari server
+      socket.on("status", (msg) => {
+        document.getElementById("status").innerText = "Status: " + msg;
+      });
+
+      // Event saat menerima QR Code khusus buat session ini
+      socket.on("qr_code", (qrString) => {
+        console.log("Dapat QR:", qrString);
+        const qrContainer = document.getElementById("qrcode");
+        qrContainer.innerHTML = ""; // Bersihkan teks "Menunggu..."
+
+        // Generate gambar QR dari string
+        new QRCode(qrContainer, {
+          text: qrString,
+          width: 256,
+          height: 256,
+        });
+
+        document.getElementById("status").innerText = "Status: Scan Sekarang!";
+      });
+
+      async function startSession() {
+        const name = document.getElementById("sessionName").value;
+        if (!name) return alert("Isi nama session dulu bos!");
+
+        currentSession = name;
+
+        // 2. Join Room Socket dulu
+        socket.emit("join_session", name);
+
+        // 3. Panggil API untuk trigger backend
+        document.getElementById("qrcode").innerText = "Memproses...";
+        try {
+          const response = await fetch(
+            `http://localhost:8081/api/new-session?name=${name}`,
+          );
+          const text = await response.text();
+          console.log("Server Response:", text);
+        } catch (err) {
+          console.error("Gagal panggil API:", err);
+          alert("Server Go belum jalan kali?");
+        }
+      }
+    </script>
+  </body>
+</html>

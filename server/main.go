@@ -1,0 +1,33 @@
+package main
+
+import (
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+
+	"dadandev.com/wa-engine/internal/api"
+	"dadandev.com/wa-engine/internal/config"
+	"dadandev.com/wa-engine/internal/middleware"
+	"dadandev.com/wa-engine/internal/network"
+	"dadandev.com/wa-engine/pkg/whatsapp"
+)
+
+func main() {
+	end := make(chan os.Signal, 1)
+	whatsapp.NewWhatsappManager()
+	conf := config.Get()
+	r := network.InitServer()
+	r.Use(middleware.Logger)
+	a := r.PathPrefix("/api").Subrouter()
+	api.ApiHandler(a)
+	go func() {
+		if err := http.ListenAndServe(conf.Port, r); err != nil {
+			log.Fatal(err.Error())
+		}
+	}()
+
+	signal.Notify(end, os.Interrupt)
+	<-end
+	log.Println("shutting down")
+}
