@@ -1,12 +1,19 @@
 package whatsapp
 
-import "fmt"
+import (
+	"fmt"
+
+	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/store/sqlstore"
+)
 
 type WhatsappEngine interface {
 	Connect(name string)
 	IsConnected() bool
 }
 type engine struct {
+	Whatsapp  *whatsmeow.Client
+	Container *sqlstore.Container
 }
 
 func NewWhatsappEngine() *engine {
