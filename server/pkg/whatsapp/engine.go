@@ -17,8 +17,9 @@ import (
 )
 
 type WhatsappEngine interface {
-	Connect(name string)
+	NewClient(name string)
 	IsConnected() bool
+	Logout()
 	GetClient() *whatsmeow.Client
 	LoadStorage(ctx context.Context) (*sqlstore.Container, error)
 }
@@ -26,11 +27,22 @@ type engine struct {
 	Whatsapp  *whatsmeow.Client
 	Container *sqlstore.Container
 	storeName string
+	ctx       context.Context
 }
 
+func (w *engine) Logout() {
+	if w.Whatsapp.IsConnected() {
+		err := w.Whatsapp.Logout(w.ctx)
+		if err != nil {
+			w.Whatsapp.Disconnect()
+		}
+	}
+}
 func NewWhatsappEngine() *engine {
+	ctx := context.Background()
 	conf := config.Get().Whatsapp
 	return &engine{
+		ctx:       ctx,
 		storeName: conf.StorageName,
 	}
 }
@@ -74,18 +86,17 @@ func (w *engine) getJIDFromDB(uuid string) (string, error) {
 	}
 	return engineID, nil
 }
-func (w *engine) Connect(name string) {
+func (w *engine) NewClient(name string) {
 	w.storeName = name
-	ctx := context.Background()
 	var device *store.Device
-	storage, error := w.LoadStorage(ctx)
+	storage, error := w.LoadStorage(w.ctx)
 	uid, err := w.getJIDFromDB(name)
 	if err != nil {
 		fmt.Println("Not device from db")
 	}
 	jid, err := types.ParseJID(uid)
 	if err == nil {
-		device, _ = storage.GetDevice(ctx, jid)
+		device, _ = storage.GetDevice(w.ctx, jid)
 
 	}
 	if device == nil {

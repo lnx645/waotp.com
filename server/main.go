@@ -24,6 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//init whatsapp manager
 	whatsapp.NewWhatsappManager()
 	r := network.InitServer()
 	r.Use(middleware.Logger)
