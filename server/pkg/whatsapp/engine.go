@@ -6,13 +6,13 @@ import (
 
 	"dadandev.com/wa-engine/internal/config"
 	"dadandev.com/wa-engine/internal/database"
+	"dadandev.com/wa-engine/pkg/utils"
 	_ "github.com/glebarez/go-sqlite"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
-	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
 type WhatsappEngine interface {
@@ -105,12 +105,12 @@ func (w *engine) NewClient(name string) {
 	}
 
 	w.Container = GlobalContainer
-	clientLog := waLog.Stdout("Client", "DEBUG", true)
-	client := whatsmeow.NewClient(device, clientLog)
+	client := whatsmeow.NewClient(device, nil)
 	client.AddEventHandler(func(evt any) {
 		switch evt.(type) {
 		case *events.Connected:
 			go w.updateDeviceStatus(client, name, "connected")
+			client.SendPresence(w.ctx, types.PresenceAvailable)
 		case *events.Disconnected:
 			go w.updateDeviceStatus(client, name, "disconnected")
 		case *events.LoggedOut:
@@ -126,7 +126,7 @@ func (w *engine) NewClient(name string) {
 		for evt := range qrChan {
 			switch evt.Event {
 			case "code":
-				fmt.Println("QR code:", evt.Code)
+				utils.GenerateAndSaveQrCode(evt.Code, fmt.Sprintf("public/qr/%s.png", name))
 			case "timeout":
 				fmt.Println("QR code:", "timeout")
 			default:
