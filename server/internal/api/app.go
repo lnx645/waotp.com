@@ -10,12 +10,15 @@ import (
 
 func ApiHandler(api *mux.Router) {
 	api.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request) {
-		wa := whatsapp.Manager.GetOrCreate("WKWKWKKW")
+		wa := whatsapp.Manager.GetOrCreate("device_1")
 		if !wa.IsConnected() {
-			wa.Connect("device_1")
+			go wa.Connect("device_1")
 		}
-		network.SendToRoom("anonim", "foo", "Bar")
-		w.Write([]byte("WKWKWKW"))
+		if wa.IsConnected() {
+			network.SendToRoom("anonim", "foo", "Bar")
+			id := wa.GetClient().Store.ID.String()
+			w.Write([]byte(id))
+		}
 	})
 
 }

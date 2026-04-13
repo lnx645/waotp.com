@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -8,6 +9,7 @@ import (
 
 	"dadandev.com/wa-engine/internal/api"
 	"dadandev.com/wa-engine/internal/config"
+	"dadandev.com/wa-engine/internal/database"
 	"dadandev.com/wa-engine/internal/middleware"
 	"dadandev.com/wa-engine/internal/network"
 	"dadandev.com/wa-engine/pkg/whatsapp"
@@ -15,13 +17,20 @@ import (
 
 func main() {
 	end := make(chan os.Signal, 1)
-	whatsapp.NewWhatsappManager()
 	conf := config.Get()
+	//init database
+	database.InitDB(conf.Database)
+	err := database.DB.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	whatsapp.NewWhatsappManager()
 	r := network.InitServer()
 	r.Use(middleware.Logger)
 	a := r.PathPrefix("/api").Subrouter()
 	api.ApiHandler(a)
 	go func() {
+		fmt.Println("Running")
 		if err := http.ListenAndServe(conf.Port, r); err != nil {
 			log.Fatal(err.Error())
 		}
