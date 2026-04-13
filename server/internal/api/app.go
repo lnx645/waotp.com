@@ -22,6 +22,7 @@ func ApiHandler(api *mux.Router) {
 	})
 	api.HandleFunc("/cek-koneksi", func(w http.ResponseWriter, r *http.Request) {
 		wa := whatsapp.Manager.GetOrCreate(r.URL.Query().Get("name"))
+
 		if wa.IsConnected() {
 			id := wa.GetClient().Store.ID.String()
 			w.Write([]byte(id))

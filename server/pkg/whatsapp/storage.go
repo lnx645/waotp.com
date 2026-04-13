@@ -9,7 +9,10 @@ import (
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
-var GlobalContainer *sqlstore.Container
+var (
+	GlobalContainer *sqlstore.Container
+	GlobalSessions  map[string]WhatsappEngine
+)
 
 func InitStorage(ctx context.Context) error {
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
@@ -18,5 +21,6 @@ func InitStorage(ctx context.Context) error {
 		return err
 	}
 	GlobalContainer = store
+	GlobalSessions = make(map[string]WhatsappEngine)
 	return err
 }

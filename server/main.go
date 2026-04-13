@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,20 +19,17 @@ func main() {
 	end := make(chan os.Signal, 1)
 	conf := config.Get()
 	//init database
-	ctx := context.Background()
 	database.InitDB(conf.Database)
 	err := database.DB.Connect()
 	if err != nil {
 		log.Fatal(err)
 	}
-	whatsapp.InitStorage(ctx)
-	whatsapp.NewWhatsappManager()
-	go whatsapp.Manager.LoadDeviceFromStorage()
+	whatsapp.InitWhatsapp()
 	r := network.InitServer()
 	r.Use(middleware.Logger)
 	a := r.PathPrefix("/api").Subrouter()
 	api.ApiHandler(a)
-	go func() {
+	func() {
 		fmt.Println("Running")
 		if err := http.ListenAndServe(conf.Port, r); err != nil {
 			log.Fatal(err.Error())

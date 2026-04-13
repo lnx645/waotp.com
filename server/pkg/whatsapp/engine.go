@@ -12,6 +12,7 @@ import (
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
+	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
 type WhatsappEngine interface {
@@ -104,16 +105,16 @@ func (w *engine) NewClient(name string) {
 	}
 
 	w.Container = GlobalContainer
-	// clientLog := waLog.Stdout("Client", "DEBUG", true)
-	client := whatsmeow.NewClient(device, nil)
+	clientLog := waLog.Stdout("Client", "DEBUG", true)
+	client := whatsmeow.NewClient(device, clientLog)
 	client.AddEventHandler(func(evt any) {
 		switch evt.(type) {
 		case *events.Connected:
 			go w.updateDeviceStatus(client, name, "connected")
 		case *events.Disconnected:
-			go w.updateDeviceStatus(client, name, "logout")
-		case *events.LoggedOut:
 			go w.updateDeviceStatus(client, name, "disconnected")
+		case *events.LoggedOut:
+			go w.updateDeviceStatus(client, name, "logout")
 		}
 	})
 	if client.Store.ID == nil {
