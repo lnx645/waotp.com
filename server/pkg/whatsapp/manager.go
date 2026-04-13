@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"sync"
+
+	"go.mau.fi/whatsmeow/store/sqlstore"
 )
 
 type WhatsappManager struct {
-	mu       sync.RWMutex
-	sessions map[string]WhatsappEngine
+	mu        sync.RWMutex
+	container *sqlstore.Container
+	sessions  map[string]WhatsappEngine
 }
 
 func (w *WhatsappManager) GetOrCreate(name string) WhatsappEngine {
@@ -29,7 +32,12 @@ func NewWhatsappManager() {
 func (w *WhatsappManager) GetEngine() WhatsappEngine {
 	return NewWhatsappEngine()
 }
-
+func (w *WhatsappManager) LoadDeviceFromStorage() {
+	_, err := GlobalContainer.GetAllDevices(context.Background())
+	if err != nil {
+		fmt.Println("WKWKWW")
+	}
+}
 func (w *WhatsappManager) FullLogout(name string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()

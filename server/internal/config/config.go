@@ -33,7 +33,9 @@ func Get() *Config {
 		log.Fatal(err.Error())
 	}
 	return &Config{
-		Whatsapp: Whatsapp{StorageName: os.Getenv("WA_STORAGE_NAME")},
+		Whatsapp: Whatsapp{
+			StorageName: os.Getenv("WA_STORAGE_NAME"),
+		},
 		App: App{
 			Host: os.Getenv("APP_HOST"),
 			Port: os.Getenv("APP_PORT"),

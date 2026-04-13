@@ -3,7 +3,6 @@ package whatsapp
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"dadandev.com/wa-engine/internal/config"
 	"dadandev.com/wa-engine/internal/database"
@@ -13,15 +12,14 @@ import (
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
-	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
 type WhatsappEngine interface {
 	NewClient(name string)
 	IsConnected() bool
 	Logout()
+	GetJIDFromDB(name string) (string, error)
 	GetClient() *whatsmeow.Client
-	LoadStorage(ctx context.Context) (*sqlstore.Container, error)
 }
 type engine struct {
 	Whatsapp  *whatsmeow.Client
@@ -75,7 +73,7 @@ func (w *engine) updateDeviceStatus(client *whatsmeow.Client, sessionName string
 		fmt.Printf("Device %s [%s] berhasil di-%s!\n", phone, deviceEngineID, status)
 	}
 }
-func (w *engine) getJIDFromDB(uuid string) (string, error) {
+func (w *engine) GetJIDFromDB(uuid string) (string, error) {
 	db := database.DB.GetConnection()
 	var engineID string
 
@@ -89,26 +87,23 @@ func (w *engine) getJIDFromDB(uuid string) (string, error) {
 func (w *engine) NewClient(name string) {
 	w.storeName = name
 	var device *store.Device
-	storage, error := w.LoadStorage(w.ctx)
-	uid, err := w.getJIDFromDB(name)
+	uid, err := w.GetJIDFromDB(name)
 	if err != nil {
 		fmt.Println("Not device from db")
 	}
 	jid, err := types.ParseJID(uid)
 	if err == nil {
-		device, _ = storage.GetDevice(w.ctx, jid)
+		device, _ = GlobalContainer.GetDevice(w.ctx, jid)
 
 	}
 	if device == nil {
 		fmt.Printf("[%s] Device tidak ditemukan, membuat session baru...\n", name)
-		device = storage.NewDevice()
+		device = GlobalContainer.NewDevice()
 	} else {
 		fmt.Printf("[%s] Menggunakan session lama: %s\n", name, device.ID.String())
 	}
-	if error != nil {
-		log.Fatal(error.Error())
-	}
-	w.Container = storage
+
+	w.Container = GlobalContainer
 	// clientLog := waLog.Stdout("Client", "DEBUG", true)
 	client := whatsmeow.NewClient(device, nil)
 	client.AddEventHandler(func(evt any) {
@@ -148,9 +143,4 @@ func (w *engine) NewClient(name string) {
 }
 func (w *engine) IsConnected() bool {
 	return w.Whatsapp.IsConnected()
-}
-
-func (w *engine) LoadStorage(ctx context.Context) (*sqlstore.Container, error) {
-	dbLog := waLog.Stdout("Database", "DEBUG", true)
-	return sqlstore.New(ctx, "sqlite", fmt.Sprintf("file:data/%s.db?_pragma=foreign_keys(1)", w.storeName), dbLog)
 }

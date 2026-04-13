@@ -10,9 +10,9 @@ import (
 
 func ApiHandler(api *mux.Router) {
 	api.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request) {
-		wa := whatsapp.Manager.GetOrCreate("device_1")
+		wa := whatsapp.Manager.GetOrCreate(r.URL.Query().Get("name"))
 		if !wa.IsConnected() {
-			go wa.Connect("device_1")
+			go wa.NewClient(r.URL.Query().Get("name"))
 		}
 		if wa.IsConnected() {
 			network.SendToRoom("anonim", "foo", "Bar")
@@ -21,7 +21,7 @@ func ApiHandler(api *mux.Router) {
 		}
 	})
 	api.HandleFunc("/cek-koneksi", func(w http.ResponseWriter, r *http.Request) {
-		wa := whatsapp.Manager.GetOrCreate("device_1")
+		wa := whatsapp.Manager.GetOrCreate(r.URL.Query().Get("name"))
 		if wa.IsConnected() {
 			id := wa.GetClient().Store.ID.String()
 			w.Write([]byte(id))

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,13 +20,15 @@ func main() {
 	end := make(chan os.Signal, 1)
 	conf := config.Get()
 	//init database
+	ctx := context.Background()
 	database.InitDB(conf.Database)
 	err := database.DB.Connect()
 	if err != nil {
 		log.Fatal(err)
 	}
-	//init whatsapp manager
+	whatsapp.InitStorage(ctx)
 	whatsapp.NewWhatsappManager()
+	go whatsapp.Manager.LoadDeviceFromStorage()
 	r := network.InitServer()
 	r.Use(middleware.Logger)
 	a := r.PathPrefix("/api").Subrouter()
