@@ -21,6 +21,7 @@ func ApiHandler(api *mux.Router) {
 			go wa.NewClient(r.URL.Query().Get("name"))
 		}
 		if wa.IsConnected() {
+			panic("WADUH PAKIN")
 			network.SendToRoom("anonim", "foo", "Bar")
 			id := wa.GetClient().Store.ID.String()
 			w.Write([]byte(id))
