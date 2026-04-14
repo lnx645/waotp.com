@@ -18,6 +18,7 @@ import (
 type WhatsappEngine interface {
 	NewClient(name string)
 	IsConnected() bool
+
 	Logout()
 	GetJIDFromDB(name string) (string, error)
 	GetClient() *whatsmeow.Client
@@ -144,4 +145,8 @@ func (w *engine) NewClient(name string) {
 }
 func (w *engine) IsConnected() bool {
 	return w.Whatsapp.IsConnected()
+}
+
+func (w *engine) IsLogout() bool {
+	return !w.Whatsapp.IsLoggedIn()
 }

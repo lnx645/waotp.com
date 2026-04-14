@@ -29,23 +29,24 @@ func (w *WhatsappManager) GetOrCreate(name string) WhatsappEngine {
 	w.sessions[name] = engine
 	return engine
 }
-func NewWhatsappManager() {
+func NewWhatsappManager(Session *map[string]WhatsappEngine) {
 	Manager = &WhatsappManager{
-		sessions: GlobalSessions,
+		sessions: *Session,
 	}
 }
 func (w *WhatsappManager) GetEngine() WhatsappEngine {
 	return NewWhatsappEngine()
 }
 
-func (w *WhatsappManager) LoadDeviceFromStorage() {
-	rows, err := database.DB.GetConnection().Query("SELECT id, phone, device_engine_id, device_uuid, status FROM devices")
+func (w *WhatsappManager) LoadDeviceFromStorage(ctx context.Context) {
+	sql := "SELECT id, phone, device_engine_id, device_uuid, status FROM devices"
+	rows, err := database.DB.GetConnection().Query(sql)
 	if err != nil {
 		log.Fatal(err)
 	}
 	var wg sync.WaitGroup
 	defer rows.Close()
-	chanel := make(chan struct{}, 1)
+	chanel := make(chan struct{}, 14)
 	for rows.Next() {
 		wg.Add(1)
 		var id int
@@ -63,7 +64,7 @@ func (w *WhatsappManager) LoadDeviceFromStorage() {
 			if !engine.GetClient().IsConnected() {
 				engine.NewClient(uuid)
 				time.Sleep(2 * time.Second)
-				engine.GetClient().SendPresence(context.Background(), types.PresenceAvailable)
+				engine.GetClient().SendPresence(ctx, types.PresenceAvailable)
 			}
 		}(uuid)
 		minDelay := 1
@@ -76,6 +77,7 @@ func (w *WhatsappManager) LoadDeviceFromStorage() {
 	wg.Wait()
 	fmt.Println("Semua device yang valid telah berhasil diload.")
 }
+
 func (w *WhatsappManager) FullLogout(name string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()

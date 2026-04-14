@@ -2,11 +2,15 @@ package whatsapp
 
 import (
 	"context"
+	"time"
 )
 
 func InitWhatsapp() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	InitStorage(ctx)
-	NewWhatsappManager()
-	go Manager.LoadDeviceFromStorage()
+	NewWhatsappManager(&GlobalSessions)
+	go func(ctx context.Context) {
+		Manager.LoadDeviceFromStorage(ctx)
+	}(ctx)
+	defer cancel()
 }

@@ -26,6 +26,9 @@ func main() {
 	}
 	whatsapp.InitWhatsapp()
 	r := network.InitServer()
+	staticFileDirectory := http.Dir("./public/qr/")
+	staticFileHandler := http.FileServer(staticFileDirectory)
+	r.PathPrefix("/static/qr/").Handler(http.StripPrefix("/static/qr/", staticFileHandler))
 	r.Use(middleware.Logger)
 	a := r.PathPrefix("/api").Subrouter()
 	api.ApiHandler(a)
