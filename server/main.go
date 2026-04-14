@@ -18,12 +18,8 @@ import (
 func main() {
 	end := make(chan os.Signal, 1)
 	conf := config.Get()
-	//init database
+	//initialize database connection
 	database.InitDB(conf.Database)
-	err := database.DB.Connect()
-	if err != nil {
-		log.Fatal(err)
-	}
 	whatsapp.InitWhatsapp()
 	r := network.InitServer()
 	staticFileDirectory := http.Dir("./public/qr/")
@@ -38,7 +34,6 @@ func main() {
 			log.Fatal(err.Error())
 		}
 	}()
-
 	signal.Notify(end, os.Interrupt)
 	<-end
 	log.Println("shutting down")

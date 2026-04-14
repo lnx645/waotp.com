@@ -15,16 +15,26 @@ type Database struct {
 	db     *sqlx.DB
 }
 
-var DB *Database
+var (
+	DB        *Database
+	DB_FORMAT string = "%s:%s@tcp(%s:%s)/%s"
+)
 
 func InitDB(config config.Databse) {
 	DB = &Database{
 		Config: config,
 	}
+	DB.Migration()
+	err := DB.Connect()
+	if err != nil {
+		log.Println("Database connect failde: ", err)
+	}
 }
-
+func (d *Database) Migration() {
+	go RunMigration(&d.Config)
+}
 func (d *Database) Connect() error {
-	db, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", d.Config.User, d.Config.Pass, d.Config.Host, d.Config.Port, d.Config.Name))
+	db, err := sqlx.Open("mysql", fmt.Sprintf(DB_FORMAT, d.Config.User, d.Config.Pass, d.Config.Host, d.Config.Port, d.Config.Name))
 
 	if err != nil {
 		return err

@@ -1,0 +1,8 @@
+CREATE TABLE users (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(225) NOT NULL,
+    email VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(225) NOT NULL,
+    is_verified BOOLEAN DEFAULT (true),
+    PRIMARY KEY (id)
+) ENGINE = InnoDB;
