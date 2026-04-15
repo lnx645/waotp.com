@@ -13,6 +13,7 @@ import (
 	"dadandev.com/wa-engine/internal/middleware"
 	"dadandev.com/wa-engine/internal/network"
 	"dadandev.com/wa-engine/pkg/whatsapp"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -26,11 +27,20 @@ func main() {
 	staticFileHandler := http.FileServer(staticFileDirectory)
 	r.PathPrefix("/static/qr/").Handler(http.StripPrefix("/static/qr/", staticFileHandler))
 	r.Use(middleware.Logger)
-	a := r.PathPrefix("/api").Subrouter()
+	a := r.PathPrefix("/v1/api").Subrouter()
+	//api handler
 	api.ApiHandler(a)
+	api.RegisterAuthRouter(a)
 	func() {
 		fmt.Println("Running")
-		if err := http.ListenAndServe(conf.Port, r); err != nil {
+		c := cors.New(cors.Options{
+			AllowedOrigins:   []string{"*"}, // Port Vite kamu
+			AllowCredentials: true,
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		})
+		cors := c.Handler(r)
+		if err := http.ListenAndServe(conf.Port, cors); err != nil {
 			log.Fatal(err.Error())
 		}
 	}()

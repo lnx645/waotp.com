@@ -12,7 +12,7 @@ func send(w http.ResponseWriter, status int, payload any) {
 
 }
 func ErrorResponse(w http.ResponseWriter, status int, msg string) {
-	send(w, http.StatusInternalServerError, struct {
+	send(w, status, struct {
 		Status  int    `json:"status"`
 		Success bool   `json:"success"`
 		Message string `json:"message"`
@@ -21,4 +21,11 @@ func ErrorResponse(w http.ResponseWriter, status int, msg string) {
 		Message: msg,
 		Success: false,
 	})
+}
+func ResponseErrorWithData(w http.ResponseWriter, status int, data any) {
+
+	send(w, status, map[string]any{"errors": data, "status": status, "success": false})
+}
+func SuccessResponse(w http.ResponseWriter, data interface{}) {
+	send(w, http.StatusOK, data)
 }

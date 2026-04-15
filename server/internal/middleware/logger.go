@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -21,6 +22,7 @@ func Logger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func(w http.ResponseWriter, r *http.Request) {
 			if err := recover(); err != nil {
+				log.Panic(err)
 				utils.ErrorResponse(w, http.StatusInternalServerError, "Internal Server Error")
 			}
 		}(w, r)

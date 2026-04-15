@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { state } from './lib/socket';
-
-
+import { RouterView } from "vue-router";
+import 'vue-sonner/style.css'
+import { Toaster } from "vue-sonner";
 </script>
 
 <template>
-{{ state.connected }}
+    <Toaster/>
+  <RouterView />
 </template>

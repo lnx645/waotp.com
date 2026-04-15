@@ -12,7 +12,7 @@ const SOCKET_PATH string = "/realtime/ws/"
 
 func InitServer() *mux.Router {
 	r := mux.NewRouter()
-	r.Use(mux.CORSMethodMiddleware(r))
+
 	io := InitSocketServer()
 	io.On("connection", func(clients ...any) {
 		client := clients[0].(*socket.Socket)
